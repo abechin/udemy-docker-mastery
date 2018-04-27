@@ -13,5 +13,6 @@
 
 ## Reference ##
 
-* [postgres - dockerhub official repository](https://hub.docker.com/_/postgres/)
+* [postgres - docker hub official repository](https://hub.docker.com/_/postgres/)
+* [postgres - docker store](https://store.docker.com/images/postgres)
 * [postgress 9.6 Dockerfile](https://github.com/docker-library/postgres/blob/ef4545c07bd97e5585bb9e7f2680a4859b9ccf3c/9.6/Dockerfile)
