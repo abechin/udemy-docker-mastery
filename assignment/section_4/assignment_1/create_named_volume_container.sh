@@ -9,9 +9,9 @@ create_postgres() {
   version=$1
   volume_name=$2
   echo "##########"
-  echo "docker container run -it --name postgres_${version} -v ${volume_name}:/var/lib/postgresql/data postgres:${version}"
+  echo "docker container run -d --name postgres_${version} -v ${volume_name}:/var/lib/postgresql/data postgres:${version}"
   echo "##########"
-  docker container run -it --name postgres_${version} -v ${volume_name}:/var/lib/postgresql/data postgres:${version}
+  docker container run -d --name postgres_${version} -v ${volume_name}:/var/lib/postgresql/data postgres:${version}
 }
 
 log_postgres() {
