@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<!-- saved from url=(0022)http://localhost:8090/ -->
+<html><style type="text/css" id="night-mode-pro-style"></style><link type="text/css" rel="stylesheet" id="night-mode-pro-link"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>Instant Markdown</title>
+  <style>
+      .markdown-body {
+          box-sizing: border-box;
+          min-width: 200px;
+          max-width: 980px;
+          margin: 0 auto;
+          padding: 45px;
+      }
+    </style>
+<link rel="stylesheet" href="./README_files/github-markdown.css">
+<link rel="stylesheet" href="./README_files/github-highlight.css">
+<script src="./README_files/socket.io.js"></script>
+<script>
+      var socket = io();
+      socket.on('markdown', function (msg) {
+        document.getElementById("markdown").innerHTML = msg;
+        var cursor = document.getElementById("instant-markdown-cursor");
+        if (cursor) {
+          cursor.scrollIntoView();
+        }
+      });
+      socket.on('disconnect', function() {
+        window.close();
+      })
+    </script>
+<style id="holderjs-style" type="text/css"></style><style type="text/css">a#link-to-fond:hover{background-color:#fff;color:#4e80ff!important}a#link-to-fond:visited{color:#fff}#close-fond-bar:hover{cursor:pointer}#fond-bar{display:block;height:50px;max-height:60px;min-height:10px;background-color:#147bd1;padding:5px 5px 5px 10px;position:fixed;left:0;top:42px;margin-top:-60px;width:100%;z-index:999999;text-align:center;-webkit-box-sizing:initial;box-sizing:initial}#fond-bar-container{display:inline-block;width:98%;margin:0;position:relative;line-height:32px;max-height:32px}#fond-text{position:relative;color:#fff!important;font-size:16px!important;text-align:centecenter!important;margin:0!important;float:left!important;text-shadow:none!important;padding:4px!important;line-height:60px;vertical-align:middle;width:100%}#fond-text,#link-to-fond{font-family:walsheim,Arial!important}#link-to-fond{color:#fff;font-size:14px!important;font-weight:400!important;border:1px solid #fff;padding:6px 20px;border-radius:2px;text-decoration:none!important;margin-left:12px}#fond-small{width:24px;height:24px;margin-right:8px;margin-top:-2px;vertical-align:middle;display:inline!important}#close-fond-bar{position:absolute;top:26px;right:5px;width:14px;z-index:999999;font-family:Arial;font-size:12px}</style></head>
+
+<body class=" __plain_text_READY__">
+  <article id="markdown" class="markdown-body"><h1 id="assignment-&lt;span id=" instant-markdown-cursor"="">compose-for-on-the-fly-image-building-and-multi-container-testing"&gt;Assignment: Compose For On-The-Fly Image Building and Multi-Container Testing</h1>
+<p>Goal: This time imagine you're just wanting to learn Drupal's admin and GUI, or maybe you're a software tester and you need to test a new theme for Drupal. When configured properly, this will let you build a custom image and start everything with <code>docker compose up</code> including storing important db and config data in volumes so the site will remember your changes across Compose restarts.</p>
+<ul>
+<li>Use the compose file you created in the last assignment (drupal and postgres) as a starting point.</li>
+<li>Let's pin image version from Docker Hub this time. It's always a good idea to do that so a new major version doesn't surprise you.</li>
+</ul>
+<h2 id="dockerfile">Dockerfile</h2>
+<ul>
+<li>First you need to build a custom Dockerfile in this directory, <code>FROM drupal:8.2</code></li>
+<li>Then RUN apt package manager command to install git: <code>apt-get update &amp;&amp; apt-get install -y git</code></li>
+<li>Remember to cleanup after your apt install with <code>rm -rf /var/lib/apt/lists/*</code> and use <code>\</code> and <code>&amp;&amp;</code> properly. You can find examples of them in drupal official image. More on this below under Compose file.</li>
+<li>Then change <code>WORKDIR /var/www/html/themes</code></li>
+<li>Then use git to clone the theme with: <code>RUN git clone --branch 8.x-3.x --single-branch --depth 1 https://git.drupal.org/project/bootstrap.git</code></li>
+<li>Combine that line with this line, as we need to change permissions on files and don't want to use another image layer to do that (it creates size bloat). This drupal container runs as www-data user but the build actually runs as root, so often we have to do things like <code>chown</code> to change file owners to the proper user: <code>chown -R www-data:www-data bootstrap</code>. Remember the fist line needs a <code>\</code> at end to signify the next line is included in the command, and at start of next line you should have <code>&amp;&amp;</code> to signify "if first command succeeds then also run this command"</li>
+<li>Then, just to be safe, change the working directory back to its default (from drupal image) at <code>/var/www/html</code></li>
+</ul>
+<h2 id="compose-file">Compose File</h2>
+<ul>
+<li>We're going to build a custom image in this compose file for drupal service. Use Compose file from previous assignment for Drupal to start with, and we'll add to it, as well as change image name.</li>
+<li>Rename image to <code>custom-drupal</code> as we want to make a new image based on the official <code>drupal:8.2</code>.</li>
+<li>We want to build the default Dockerfile in this directory by adding <code>build: .</code> to the <code>drupal</code> service. When we add a build + image value to a compose service, it knows to use the image name to write to in our image cache, rather then pull from Docker Hub.</li>
+<li>For the <code>postgres:9.6</code> service, you need the same password as in previous assignment, but also add a volume for <code>drupal-data:/var/lib/postgresql/data</code> so the database will persist across Compose restarts.</li>
+</ul>
+<h2 id="start-containers-configure-drupal">Start Containers, Configure Drupal</h2>
+<ul>
+<li>Start containers like before, configure Drupal web install like before.</li>
+<li>After website comes up, click on <code>Appearance</code> in top bar, and notice a new theme called <code>Bootstrap</code> is there. That's the one we added with our custom Dockerfile.</li>
+<li>Click <code>Install and set as default</code>. Then click <code>Back to site</code> (in top left) and the website interface should look different. You've successfully installed and activated a new theme in your own custom image without installing anything on your host other then Docker!</li>
+<li>If you exit (ctrl-c) and then <code>docker-compose</code> down it will delete containers, but not the volumes, so on next <code>docker-compose up</code> everything will be as it was.</li>
+<li>To totally clean up volumes, add <code>-v</code> to <code>down</code> command.</li>
+</ul>
+</article>
+
+
+</body></html>
